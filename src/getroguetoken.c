@@ -25,6 +25,7 @@
 # include "types.h"
 # include "globals.h"
 # include "termtokens.h"
+#include "prototype.h"
 
 # define GETLOGCHAR	fgetc(logfile)
 # define ISPRT(c)	((c) >= ' ' && (c) <= '~')
@@ -95,7 +96,7 @@ void rogue_log_write_token (char ch)
         case CL_TOK: fprintf (fecho, "{ff}");                   break;
         case CM_TOK: fprintf (fecho, "{cm(%d,%d)}", number1, number2);  break;
         case CR_TOK: fprintf (fecho, "{cr}");                   break;
-        case ER_TOK: fprintf (fecho, "{ERRESC}", ch);           break;
+        case ER_TOK: fprintf (fecho, "{ERRESC(%c)}", ch);           break;
         case LF_TOK: fprintf (fecho, "{lf}");                   break;
         case ND_TOK: fprintf (fecho, "{nd(%d)}", number1);      break;
         case SE_TOK: fprintf (fecho, "{se}");                   break;

@@ -126,11 +126,12 @@ dumpmonster ()
 sleepmonster ()
 {
   register int m;
+  char msg[256];
 
   for (m = 0; m < mlistlen; ++m) {
     if (mlist[m].q == 0 && ! ADJACENT (m)) {
-      dwait (D_MONSTER, "Found a sleeping %s at %d,%d",
-             monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+      sprintf(msg, "Found a sleeping %s at %d,%d", monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+      dwait (D_MONSTER, msg);
 
       mlist[m].q = ASLEEP;
     }
@@ -144,13 +145,14 @@ sleepmonster ()
 holdmonsters ()
 {
   register int m;
+  char msg[256];
 
   for (m = 0; m < mlistlen; ++m) {
     if (mlist[m].q == 0 &&
         (max (abs (mlist[m].mrow - atrow),
               abs (mlist[m].mcol - atcol)) < 3)) {
-      dwait (D_MONSTER, "Holding %s at %d,%d",
-             monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+      sprintf(msg, "Holding %s at %d,%d", monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+      dwait (D_MONSTER, msg);
 
       mlist[m].q = HELD;
     }
@@ -170,6 +172,7 @@ wakemonster (dir)
 int dir;
 {
   register int m;
+  char msg[256];
 
   for (m = 0; m < mlistlen; ++m) {
     if (mlist[m].q != AWAKE &&
@@ -177,8 +180,8 @@ int dir;
          (dir < 0 && ADJACENT(m) && mlist[m].chr == -dir + 'A' - 1) ||
          (dir >= 0 && dir < 8 &&
           mlist[m].mrow == atdrow(dir) && mlist[m].mcol == atdcol(dir)))) {
-      dwait (D_MONSTER, "Waking up %s at %d,%d",
-             monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+      sprintf(msg, "Waking up %s at %d,%d", monname (mlist[m].chr), mlist[m].mrow, mlist[m].mcol);
+      dwait (D_MONSTER, msg);
 
       mlist[m].q = AWAKE;
       setrc (EVERCLR, mlist[m].mrow, mlist[m].mcol);

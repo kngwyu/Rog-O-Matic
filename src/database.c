@@ -186,6 +186,7 @@ char  *name;
 stuff item_type;
 {
   register int i;
+  char msg[256];
 
   i = findfake (codename, item_type);
 
@@ -198,10 +199,10 @@ stuff item_type;
     datalen++;
   }
   else {
-    if (*dbase[i].realname && strcmp (dbase[i].realname, name))
-      dwait (D_ERROR, "Inconsistent inference, infername: dbase[i].realname '%s', name '%s'",
-             dbase[i].realname, name);
-    else {
+    if (*dbase[i].realname && strcmp (dbase[i].realname, name)) {
+      sprintf (msg, "Inconsistent inference, infername: dbase[i].realname '%s', name '%s'", dbase[i].realname, name);
+      dwait (D_ERROR, msg);
+    } else {
       memset (dbase[i].realname, '\0', NAMSIZ);
       strncpy (dbase[i].realname, name, NAMSIZ-1);
     }

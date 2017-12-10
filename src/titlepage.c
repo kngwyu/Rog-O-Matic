@@ -34,6 +34,8 @@
 # include "types.h"
 # include "globals.h"
 
+void animate (char **);
+
 static char *titlepage[]= {
   /* The static part of the display */
   "  @ !@ \"@ #@ K@! @!$@!K@!P@\" @\"$@\"(@\")@\"*@\"/@\"0@\"1@\"6@\"7@\"8@",
@@ -90,8 +92,7 @@ static char *titlepage[]= {
  * greater than 2400).
  */
 
-animate (movie)
-char *movie[];
+void animate (char *movie[])
 {
   int baud;
   register int r, c, count = 0, delaychars;

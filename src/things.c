@@ -31,6 +31,7 @@
 # include <curses.h>
 # include "types.h"
 # include "globals.h"
+#include "prototype.h"
 
 /*
  * wear: This primitive function issues a command to put on armor.
@@ -39,6 +40,8 @@
 wear (obj)
 int obj;
 {
+  char msg[256];
+
   if (currentarmor != NONE) {
     dwait (D_FATAL, "Trying to put on a second coat of armor");
     return (0);
@@ -46,7 +49,8 @@ int obj;
 
   if (cursedarmor) return (0);
 
-  command (T_HANDLING, "W%c", LETTER (obj));
+  sprintf(msg, "W%c", LETTER (obj));
+  command (T_HANDLING, msg);
   usesynch = 0;
   return (1);
 }
@@ -76,6 +80,8 @@ takeoff ()
 wield (obj)
 int obj;
 {
+  char msg[256];
+
   if (cursedweapon) return (0);
 
   if (version >= RV54A) {
@@ -85,23 +91,27 @@ int obj;
       return (0);
     }
     else if (currentweapon == NONE) {
-      command (T_HANDLING, "w%c", LETTER (obj));
+      sprintf(msg, "w%c", LETTER (obj));
+      command (T_HANDLING, msg);
     }
     else if (itemis(currentweapon, UNCURSED)) {
       cursedweapon=0;
-      command (T_HANDLING, "w%c", LETTER (obj));
+      sprintf(msg, "w%c", LETTER (obj));
+      command (T_HANDLING, msg);
     }
     else if (itemis(currentweapon, ENCHANTED)) {
       remember(currentweapon, UNCURSED);
       cursedweapon=0;
-      command (T_HANDLING, "w%c", LETTER (obj));
+      sprintf(msg, "w%c", LETTER (obj));
+      command (T_HANDLING, msg);
     }
     else {
 
       /* current weapon might be cursed */
       if (currentweapon != NONE) {
         lastdrop = currentweapon;
-        command (T_HANDLING, "w%c", ESC);
+        sprintf(msg, "w%c", ESC);
+        command (T_HANDLING, msg);
       }
     return (0);
     }
@@ -110,10 +120,13 @@ int obj;
   /* send 2 escapes because I needed to patch the new rogue to not hang
    * momentatirily on the first escape
    */
-  else if (version == RV53A)
-    command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('p'));
-  else
-    command (T_HANDLING, "w%cw%c%c", LETTER (obj), ESC, ctrl('r'));
+  else if (version == RV53A) {
+    sprintf(msg, "w%cw%c%c", LETTER (obj), ESC, ctrl('p'));
+    command (T_HANDLING, msg);
+  } else {
+    sprintf(msg, "w%cw%c%c", LETTER (obj), ESC, ctrl('r'));
+    command (T_HANDLING, msg);
+  }
 
   return (1);
 }
@@ -142,6 +155,7 @@ int obj;
 drop (obj)
 int obj;
 {
+  char msg[256];
   /* Can't if not there, in use, or on something else or
      dropped something else already */
   if (inven[obj].count < 1 ||
@@ -183,7 +197,8 @@ int obj;
       quaff (obj))
     { return (1); }
 
-  command (T_HANDLING, "d%c", LETTER (obj));
+  sprintf(msg, "d%c", LETTER (obj));
+  command (T_HANDLING, msg);
   return (1);
 }
 
@@ -194,13 +209,16 @@ int obj;
 quaff (obj)
 int obj;
 {
+  char msg[256];
   if (inven[obj].type != potion) {
-    dwait (D_ERROR, "Trying to quaff %c", LETTER (obj));
+    sprintf(msg, "Trying to quaff %c", LETTER (obj));
+    dwait (D_ERROR, msg);
     usesynch = 0;
     return (0);
   }
 
-  command (T_HANDLING, "q%c", LETTER (obj));
+  sprintf(msg, "q%c", LETTER (obj));
+  command (T_HANDLING, msg);
   return (1);
 }
 
@@ -211,13 +229,17 @@ int obj;
 reads (obj)
 int obj;
 {
+  char msg[256];
+
   if (inven[obj].type != Scroll) {
-    dwait (D_ERROR, "Trying to read %c", LETTER (obj));
+    sprintf(msg, "Trying to read %c", LETTER (obj));
+    dwait (D_ERROR, msg);
     usesynch = 0;
     return (0);
   }
 
-  command (T_HANDLING, "r%c", LETTER (obj));
+  sprintf(msg, "r%c", LETTER (obj));
+  command (T_HANDLING, msg);
   return (1);
 }
 
@@ -228,17 +250,19 @@ int obj;
 point (obj, dir)
 int obj, dir;
 {
+  char msg[256];
+
   if (inven[obj].type != wand) {
-    dwait (D_ERROR, "Trying to point %c", LETTER (obj));
+    sprintf(msg, "Trying to point %c", LETTER (obj));
+    dwait (D_ERROR, msg);
     return (0);
   }
 
   if (itemis (obj, USELESS))
     return (0);
   else {
-    command (T_HANDLING, "%c%c%c",
-             (version < RV52A) ? 'p' : 'z',	/* R5.2 MLM */
-             keydir[dir], LETTER (obj));
+    sprintf(msg, "%c%c%c", (version < RV52A) ? 'p' : 'z',	/* R5.2 MLM */ keydir[dir], LETTER (obj));
+    command (T_HANDLING, msg);
     return (1);
   }
 }
@@ -250,12 +274,16 @@ int obj, dir;
 throw (obj, dir)
 int obj, dir;
 {
+  char msg[256];
+
   if (obj < 0 || obj >= invcount) {
-    dwait (D_ERROR, "Trying to throw %c", LETTER (obj));
+    sprintf(msg, "Trying to throw %c", LETTER (obj));
+    dwait (D_ERROR, msg);
     return (0);
   }
 
-  command (T_HANDLING, "t%c%c", keydir[dir], LETTER (obj));
+  sprintf(msg, "t%c%c", keydir[dir], LETTER (obj));
+  command (T_HANDLING, msg);
   return (1);
 }
 
@@ -266,11 +294,19 @@ int obj, dir;
 puton (obj)
 int obj;
 {
-  if (leftring == NONE && rightring == NONE)
-    { command (T_HANDLING, "P%cl", LETTER (obj)); return (1); }
+  char msg[256];
 
-  if (leftring == NONE || rightring == NONE)
-    { command (T_HANDLING, "P%c", LETTER (obj)); return (1); }
+  if (leftring == NONE && rightring == NONE) {
+    sprintf(msg, "P%cl", LETTER (obj));
+    command (T_HANDLING, msg);
+    return (1);
+  }
+
+  if (leftring == NONE || rightring == NONE) {
+    sprintf(msg, "P%c", LETTER (obj));
+    command (T_HANDLING, msg);
+    return (1);
+  }
 
   return (0);
 }
@@ -662,7 +698,7 @@ int haveuseless ()
  * willrust: return true if a suit of armor can rust
  */
 
-willrust (obj)
+int willrust (obj)
 int obj;
 {
   return (! (protected ||

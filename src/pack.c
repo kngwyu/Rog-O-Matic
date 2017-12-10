@@ -32,6 +32,12 @@
 # include "types.h"
 # include "globals.h"
 
+# include "prototype.h"
+
+void clearpack (int);
+void rollpackup (register int);
+void rollpackdown (register int);
+
 static char *stuffmess [] = {
   "strange", "food", "potion", "scroll",
   "wand", "ring", "hitter", "thrower",
@@ -154,8 +160,7 @@ int pos;
  * clearpack: zero out slot in pack.  DR UTexas 01/05/84
  */
 
-clearpack (pos)
-int pos;
+void clearpack (int pos)
 {
   if (pos >= MAXINV) return;
 
@@ -180,8 +185,7 @@ int pos;
  * the pack.
  */
 
-rollpackup (pos)
-register int pos;
+void rollpackup (register int pos)
 {
   register char *savebuf;
   register int i;
@@ -215,8 +219,7 @@ register int pos;
  * objects behind that position.
  */
 
-rollpackdown (pos)
-register int pos;
+void rollpackdown (register int pos)
 {
   register char *savebuf;
   register int i;
@@ -306,9 +309,11 @@ char *msgstart, *msgend;
   int  plushit = UNKNOWN, plusdam = UNKNOWN, charges = UNKNOWN;
   stuff what;
   char *xbeg, *xend, *codenamebeg, *codenameend;
+  char msg[256];
 
   xbeg = xend = codenamebeg = codenameend = "";
-  dwait (D_PACK, "inv: message %s", mess);
+  sprintf(msg, "inv: message %s", mess);
+  dwait (D_PACK, msg);
 
   if (debug(D_MESSAGE)) {
     at (30,0);
@@ -332,14 +337,8 @@ char *msgstart, *msgend;
 
   if ((ipos < 0) || (ipos > MAXINV)) {
     len = msgend - msgstart;
-    dwait (D_ERROR,
-           "inv: ipos out of range, 0 - MAXINV(%d) ipos %d  invcount %d\nmsgs: %s\n  mess: %s\n",
-           MAXINV, ipos, invcount, msgstart, mess);
-    return(printed);
-  }
-  else {
-    deletestuff (atrow, atcol);
-    unsetrc (USELESS, atrow, atcol);
+    sprintf(msg, "inv: ipos out of range, 0 - MAXINV(%d) ipos %d  invcount %d\nmsgs: %s\n  mess: %s\n", MAXINV, ipos, invcount, msgstart, mess);
+    dwait (D_ERROR, msg);
   }
 
   if (ISDIGIT(*mess))
@@ -477,10 +476,10 @@ char *msgstart, *msgend;
   if (version >= RV53A && what == ring && charges != UNKNOWN)
     { plushit = charges; charges = UNKNOWN; }
 
-  dwait (D_PACK, "inv %s '%s'",
-         stuffmess[(int) what], objname);
-  dwait (D_PACK, "inv    ht %d dm %d ch %d kn %d",
-         plushit, plusdam, charges, xknow);
+  sprintf(msg, "inv %s '%s'", stuffmess[(int) what], objname);
+  dwait (D_PACK, msg);
+  sprintf(msg, "inv    ht %d dm %d ch %d kn %d", plushit, plusdam, charges, xknow);
+  dwait (D_PACK, msg);
 
   /* make sure all unknown potion, Scroll, wand, rings 
      are in dbase */
@@ -598,8 +597,8 @@ char *msgstart, *msgend;
       strcpy (inven[ipos].str, objname);
   }
   else if (!replaying) {
-    dwait (D_ERROR, "inv: null inven[%d].str, invcount %d.",
-           ipos, invcount);
+    sprintf(msg, "inv: null inven[%d].str, invcount %d.", ipos, invcount);
+    dwait (D_ERROR, msg);
   }
 
   /* Set cursed attribute for weapon and armor */

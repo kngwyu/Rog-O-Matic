@@ -31,6 +31,7 @@
 # include <curses.h>
 # include "types.h"
 # include "globals.h"
+#include "prototype.h"
 
 # define SEARCHES(r,c)						\
 	(onrc(DEADEND,r,c) ?					\
@@ -581,6 +582,7 @@ int *val, *avd, *cont;
 {
   register int k, nr, nc, l;
   int a, v = 0, nunseenb = 0, nseenb = 0, nearb = 0;
+  char msg[256];
 
   a = onrc (SAFE|DOOR|STAIRS|HALL, r, c) ? 0 :
       onrc (ARROW, r, c)   ? 50 :
@@ -665,8 +667,11 @@ int *val, *avd, *cont;
   if (v < 50)
     *cont = 4; 				     /* Look for something better */
 
-  if (debug (D_SCREEN) && v > 0)
-    { mvaddch (r, c, 'o'); dwait (D_SCREEN, "Value %d", v); }
+  if (debug (D_SCREEN) && v > 0) {
+    mvaddch (r, c, 'o');
+    sprintf(msg, "Value %d", v);
+    dwait (D_SCREEN, msg);
+  }
 
   return (1);
 }
@@ -942,6 +947,7 @@ pinavoid ()
 secret ()
 {
   int secretinit(), secretvalue();
+  char msg[256];
 
   /* Secret passage adjacent to door? */
   if (version >= RV53A && on (DOOR) && !blinded &&
@@ -949,8 +955,8 @@ secret ()
        seerc (' ',atrow,atcol+1) || seerc (' ',atrow,atcol-1)) &&
       SEARCHES (atrow, atcol) < timestosearch+20) {
     int count = timessearched[atrow][atcol]+1;
-    saynow ("Searching dead end door (%d,%d) for the %d%s time...",
-            atrow, atcol, count, ordinal (count));
+    sprintf (msg, "Searching dead end door (%d,%d) for the %d%s time...", atrow, atcol, count, ordinal (count));
+    saynow (msg);
     command (T_DOORSRCH, "s"); return (1);
   }
 
@@ -975,8 +981,8 @@ secret ()
 
     if ((SEARCHES (atrow, atcol) - timessearched[atrow][atcol]) > 0) {
       int count = timessearched[atrow][atcol]+1;
-      saynow ("Searching dead end (%d,%d) for the %d%s time...",
-              atrow, atcol, count, ordinal (count));
+      sprintf(msg, "Searching dead end (%d,%d) for the %d%s time...", atrow, atcol, count, ordinal (count));
+      saynow (msg);
       command (T_DOORSRCH, "s");
       return (1);
     }
@@ -1034,6 +1040,7 @@ doorexplore()
 {
   static searchcount = 0;
   int secretinit(), secretvalue();
+  char msg[256];
 
   /* If no new squares or read map, dont bother */
   if (! new_search || Level == didreadmap)
@@ -1047,8 +1054,8 @@ doorexplore()
 
   if (ontarget) { /* Moved to a possible secret door, search it */
     searchcount++;
-    saynow ("Searching square (%d,%d) for the %d%s time...",
-            atrow, atcol, searchcount, ordinal (searchcount));
+    sprintf(msg, "Searching square (%d,%d) for the %d%s time...", atrow, atcol, searchcount, ordinal (searchcount));
+    saynow (msg);
     command (T_DOORSRCH, "s");
     return (1);
   }
@@ -1124,14 +1131,17 @@ register int trns;	/* Minimum number of arrows to make it worthwhile */
 {
   int archeryinit(), archeryvalue();
   register int mr, mc;
+  char msg[256];
 
-  dwait (D_CONTROL | D_BATTLE, "archmonster: m=%d, turns=%d", m, trns);
+  sprintf(msg, "archmonster: m=%d, turns=%d", m, trns);
+  dwait (D_CONTROL | D_BATTLE, msg);
 
   if (! new_arch) return (0);
 
   /* Useless without arrows */
   if (havemult (missile, "", trns) < 0) {
-    dwait (D_BATTLE, "archmonster, fewer than %d missiles", trns);
+    sprintf(msg, "archmonster, fewer than %d missiles", trns);
+    dwait (D_BATTLE, msg);
     return (0);
   }
 
@@ -1161,7 +1171,8 @@ register int trns;	/* Minimum number of arrows to make it worthwhile */
   }
 
   /* Tell the user about it */
-  saynow ("Arching at %s", monname (mlist[m].chr));
+  sprintf(msg, "Arching at %s", monname (mlist[m].chr));
+  saynow (msg);
 
   return (1);
 }

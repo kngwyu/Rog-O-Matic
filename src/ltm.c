@@ -35,6 +35,11 @@
 # include "globals.h"
 # include "install.h"
 
+#include "prototype.h"
+
+
+void parsemonster (char *);
+
 static int nosave = 0;		/* True ==> dont write ltm back out */
 static char ltmnam[100];	/* Long term memory file name */
 
@@ -45,7 +50,9 @@ static char ltmnam[100];	/* Long term memory file name */
 mapcharacter (ch, str)
 char ch, *str;
 {
-  dwait (D_CONTROL, "mapcharacter called: '%c' ==> '%s'", ch, str);
+  char msg[256];
+  sprintf(msg, "mapcharacter called: '%c' ==> '%s'", ch, str);
+  dwait (D_CONTROL, msg);
 
   /* Ancient versions of Rogue had no wands or staves */
   if (ch == '/' && stlmatch (str, "unknown"))
@@ -106,24 +113,26 @@ char *monster;
  * access to the output file.
  */
 
-saveltm (score)
-int score;
+void saveltm (int score)
 {
   register int m;
   register FILE *ltmfil;
+  char msg[256];
 
   if (nextmon < 1 || nosave) return;
 
-  dwait (D_CONTROL, "Saveltm called, writing file '%s'", ltmnam);
+  sprintf(msg, "Saveltm called, writing file '%s'", ltmnam);
+  dwait (D_CONTROL, msg);
 
   /* Disable interrupts and open the file for writing */
   critical ();
 
   /* Only write out the new results if we can get write access */
   if (lock_file (getLockFile (), MAXLOCK)) {
-    if ((ltmfil = wopen (ltmnam, "w")) == NULL)
-      { dwait (D_WARNING, "Can't write long term memory file '%s'...", ltmnam); }
-    else {
+    if ((ltmfil = wopen (ltmnam, "w")) == NULL) {
+      sprintf(msg, "Can't write long term memory file '%s'...", ltmnam);
+      dwait (D_WARNING, msg);
+    } else {
       /* Write the ltm file header */
       fprintf (ltmfil, "Count %d, sum %d, start %d, saved %d\n",
                ltm.gamecnt+1, ltm.gamesum+score,
@@ -157,8 +166,10 @@ int score;
 
 restoreltm ()
 {
+  char msg[256];
   sprintf (ltmnam, "%s/ltm%d", getRgmDir (), version);
-  dwait (D_CONTROL, "Restoreltm called, reading file '%s'", ltmnam);
+  sprintf (msg, "Restoreltm called, reading file '%s'", ltmnam);
+  dwait (D_CONTROL, msg);
 
   clearltm (monhist);			/* Clear the original sums */
   nextmon = 0;				/* Zero the list of monsters */
@@ -172,8 +183,8 @@ restoreltm ()
     if (fexists (ltmnam))
       readltm ();
     else {
-      dwait (D_CONTROL | D_SAY,
-             "Starting long term memory file '%s'...", ltmnam);
+      sprintf(msg, "Starting long term memory file '%s'...", ltmnam);
+      dwait (D_CONTROL | D_SAY, msg);
       ltm.gamecnt = ltm.gamesum = ltm.timeswritten = 0;
       ltm.inittime = time (0);
     }
@@ -197,11 +208,12 @@ readltm ()
 {
   char buf[BUFSIZ];
   register FILE *ltmfil;
+  char msg[256];
 
   if ((ltmfil = fopen (ltmnam, "r")) == NULL) {
     nosave = 1;
-    dwait (D_WARNING | D_SAY,
-           "Could not read long term memory file '%s'...", ltmnam);
+    sprintf(msg, "Could not read long term memory file '%s'...", ltmnam);
+    dwait (D_WARNING | D_SAY, msg);
   }
   else {
     /* Read the ltm file header */
@@ -222,8 +234,7 @@ readltm ()
  * parsemonster: parse one line from the ltm file.
  */
 
-parsemonster (monster)
-char *monster;
+void parsemonster (char *monster)
 {
   register char *attrs;
   char *index();

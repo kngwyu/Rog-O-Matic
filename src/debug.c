@@ -33,9 +33,12 @@
 # include <curses.h>
 # include <setjmp.h>
 # include <string.h>
+#include <stdarg.h>
 # include "types.h"
 # include "globals.h"
 # include "install.h"
+
+#include "prototype.h"
 
 /*
  * Debugging wait loop: Handle the usual Rogomatic command chars, and also
@@ -45,15 +48,16 @@
  */
 
 /* VARARGS2 */
-dwait (msgtype, f, a1, a2, a3, a4, a5, a6, a7, a8)
-char *f;
-int msgtype, a1, a2, a3, a4, a5, a6, a7, a8;
+//int dwait (msgtype, f, a1, a2, a3, a4, a5, a6, a7, a8)
+//int dwait (int msgtype, char *f, ...)
+int dwait (int msgtype, char *msg)
+//int msgtype, a1, a2, a3, a4, a5, a6, a7, a8;
 {
-  char msg[128];
+  //char msg[128];
   int r, c;
 
   /* Build the actual message */
-  sprintf (msg, f, a1, a2, a3, a4, a5, a6, a7, a8);
+ // sprintf (msg, f, a1, a2, a3, a4, a5, a6, a7, a8);
 
   /* Log the message if the error is severe enough */
   if (!replaying && (msgtype & (D_FATAL | D_ERROR | D_WARNING))) {
@@ -85,7 +89,10 @@ int msgtype, a1, a2, a3, a4, a5, a6, a7, a8;
 
   if (! debug (msgtype | D_INFORM)) {	/* If debugoff */
     if (msgtype & D_SAY)			  /* Echo? */
-      { saynow (msg); return (1); }		  /* Yes => win */
+                   {
+      saynow (msg);
+      return (1);
+    }		  /* Yes => win */
 
     return (0);					  /* No => lose */
   }
@@ -111,13 +118,17 @@ int msgtype, a1, a2, a3, a4, a5, a6, a7, a8;
       case '^': promptforflags ();	break;
       case '&':
 
-        if (getscrpos ("char", &r, &c))
-          saynow ("Char at %d,%d '%c'", r, c, screen[r][c]);
+        if (getscrpos ("char", &r, &c)) {
+          sprintf(msg, "Char at %d,%d '%c'", r, c, screen[r][c]);
+          saynow (msg);
+        }
 
         break;
       case '(': dumpdatabase (); at (row, col); break;
       case ')': new_mark++; markcycles (DOPRINT); at (row, col); break;
-      case '~': saynow ("Version %d, quit at %d", version, quitat); break;
+      case '~': sprintf(msg, "Version %d, quit at %d", version, quitat);
+                saynow (msg);
+                break;
       case '/': dosnapshot (); break;
       default: at (row, col); return (1);
     }
@@ -256,16 +267,20 @@ char *msg;
 int *r, *c;
 {
   char buf[256];
+  char smsg[256];
 
-  saynow ("At %d,%d: enter 'row,col' for %s: ", atrow, atcol, msg);
+  sprintf(smsg, "At %d,%d: enter 'row,col' for %s: ", atrow, atcol, msg);
+  saynow (smsg);
 
   if (fgets (buf, 256, stdin)) {
     sscanf (buf, "%d,%d", r, c);
 
     if (*r>=1 && *r<23 && *c>=0 && *c<=79)
       return (1);
-    else
-      say ("%d,%d is not on the screen!", *r, *c);
+    else {
+      sprintf(smsg, "%d,%d is not on the screen!", *r, *c);
+      say (smsg);
+    }
   }
 
   at (row, col);

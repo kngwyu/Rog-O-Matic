@@ -27,6 +27,9 @@
  * Miscellaneous Macros and Constants
  */
 
+#ifndef TYPE_H
+#define TYPE_H
+
 /* Global Preprocessor constants */
 
 # define ill         ";'"
@@ -359,3 +362,5 @@ typedef struct {
   int activity[T_LISTLEN];
   int timestamp;
 } timerec;
+
+#endif

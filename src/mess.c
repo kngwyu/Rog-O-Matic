@@ -33,6 +33,10 @@
 # include "types.h"
 # include "globals.h"
 
+void curseditem ();
+void mshit (char *);
+void msmiss (char *);
+
 extern int clearsendqueue ();
 
 /* Matching macros */
@@ -157,6 +161,7 @@ parsemsg (mess, mend)
 register char *mess, *mend;
 {
   int unknown = 0;
+  char msg[256];
 
   echoit = 1;
 
@@ -355,8 +360,10 @@ register char *mess, *mend;
           remember (lastwand, WORTHLESS);
         }
         else if (MATCH("no more *")) ;
-        else if (MATCH("nothing appropriate*")) sendnow ("%c;",ESC);
-        else if (MATCH("no room*")) ;
+        else if (MATCH("nothing appropriate*")) {
+          sprintf(msg, "%c;",ESC);
+          sendnow (msg);
+        } else if (MATCH("no room*")) ;
         else if (MATCH("not wearing armor*")) ;
         else unknown++;
 
@@ -454,8 +461,13 @@ register char *mess, *mend;
           { deletestuff (atrow, atcol); unset(SCAREM | STUFF); droppedscare--; }
         else if (MATCH("this potion tastes * dull*")) infer ("thirst quenching", potion);
         else if (MATCH("this potion tastes pretty*")) infer ("thirst quenching", potion);
-        else if (MATCH("this potion tastes like * juice*"))
-          { infer ("see invisible", potion); if (version == RV36A) sendnow ("%c", ESC); }
+        else if (MATCH("this potion tastes like * juice*")) {
+            infer ("see invisible", potion);
+            if (version == RV36A) {
+                sprintf(msg, "%c", ESC);
+                sendnow (msg);
+            }
+        }
         else if (MATCH("this scroll seems to be blank*")) infer ("blank paper");
         else if (MATCH("the * bounces*")) ;
         else if (MATCH("the * vanishes as it hits the ground*"))
@@ -655,12 +667,13 @@ register char *mess, *mend;
         /* :ANT: */
 
         /* :ANT: logic error indicator */
-        else if (MATCH("you are already wearing some*"))
-          dwait (D_ERROR, "Logic error, we should know this already. '%s'", mess);
+        else if (MATCH("you are already wearing some*")) {
+          sprintf(msg, "Logic error, we should know this already. '%s'", mess);
+          dwait (D_ERROR, msg);
 
         /* :ANT: */
 
-        else unknown++;
+        } else unknown++;
 
         break;
 
@@ -685,13 +698,17 @@ register char *mess, *mend;
 
   /* Log unknown or troublesome messages */
   if ((morecount > 125) && (morecount < 150)) {
-    dwait(D_WARNING, "More Loop ->%s<-.", mess);
+    sprintf(msg, "More Loop ->%s<-.", mess);
+    dwait(D_WARNING, msg);
   }
   else if (morecount >= 150) {
-    dwait(D_FATAL, "More Loop Exit ->%s<-.", mess);
+    sprintf(msg, "More Loop Exit ->%s<-.", mess);
+    dwait(D_FATAL, msg);
   }
-  else if (unknown)
-    dwait (D_WARNING, "Unknown message '%s'", mess);
+  else if (unknown) {
+    sprintf(msg, "Unknown message '%s'", mess);
+    dwait (D_WARNING, msg);
+  }
 
   /* Send it to dwait; if dwait doesnt print it (and echo is on) echo it */
   if (echoit & !dwait (D_MESSAGE, mess))
@@ -750,11 +767,11 @@ char *name;
   int obj; char id = '*';	/* Default is "* for list" */
   stuff item_type = none;
   char lookup_name[NAMSIZ];
+  char msg[256];
 
-  if (!replaying && version < RV53A &&
-      (nextid < LETTER (0) || nextid > LETTER (invcount))) {
-    dwait (D_FATAL, "Readident: nextid %d, afterid %d, invcount %d.",
-           nextid, afterid, invcount);
+  if (!replaying && version < RV53A && (nextid < LETTER (0) || nextid > LETTER (invcount))) {
+    sprintf(msg, "Readident: nextid %d, afterid %d, invcount %d.", nextid, afterid, invcount);
+    dwait (D_FATAL, msg);
   }
 
   infer (name, Scroll);		/* Record what kind of scroll this is */
@@ -767,13 +784,15 @@ char *name;
 
   if (version < RV53A) {	/* Rogue 3.6, Rogue 5.2 */
     deleteinv (OBJECT (afterid));	/* Assume object gone */
-    sendnow (" %c", nextid);		/* Identify it */
+    sprintf(msg, " %c", nextid);		/* Identify it */
+    sendnow (msg);		/* Identify it */
 
     if (!replaying)   /* FIXME: without removing the rogo_send call during
                        * replay, replay will core dump - NYM
                        */
     {
-      rogo_send ("I%c", afterid);		/* Generate a message about it */
+      sprintf(msg, "I%c", afterid);		/* Generate a message about it */
+      rogo_send (msg);		/* Generate a message about it */
     }
 
     knowident = identifying = 1;	/* Set variables */
@@ -832,7 +851,8 @@ char *name;
     }
 
     waitfor ("not a valid item");
-    sendnow (" %c;", id);		/* Pick an object to identify */
+    sprintf(msg, " %c;", id);		/* Pick an object to identify */
+    sendnow (msg);		/* Pick an object to identify */
     if (id == '*')
       memset (lastname, '\0', NAMSIZ);
     usesynch = 0; justreadid=1;		/* Must reset inventory */
@@ -848,6 +868,7 @@ char *name;
 rampage ()
 {
   char monc;
+  char msg[256];
 
   /* Check the next monster in the list, we may not fear him */
   while (monc = *genocide) {
@@ -869,8 +890,10 @@ rampage ()
 
   /* If we found a monster, send his character, else send ESC */
   if (monc) {
-    saynow ("About to rampage against %s", monname (monc));
-    sendnow (" %c;", monc);	/* Send the monster */
+    sprintf(msg, "About to rampage against %s", monname (monc));
+    saynow (msg);
+    sprintf(msg, " %c;", monc);	/* Send the monster */
+    sendnow (msg);	/* Send the monster */
 
     /* Add to the list of 'gone' monsters */
     sprintf (genocided, "%s%c", genocided, monc);
@@ -878,7 +901,8 @@ rampage ()
   }
   else {
     dwait (D_ERROR, "Out of monsters to genocide!");
-    sendnow (" %c;", ESC);	/* Cancel the command */
+    sprintf(msg, " %c;", ESC);	/* Cancel the command */
+    sendnow (msg);	/* Cancel the command */
   }
 }
 
@@ -889,12 +913,15 @@ rampage ()
  * Good rings we have identified, so don't bother marking rings.
  */
 
-curseditem ()
+void curseditem ()
 {
+  char msg[256];
+
   usesynch = 0;    /* Force a reset inventory */
 
   clearsendqueue();
-  sendnow ("%c", ESC);
+  sprintf(msg, "%c", ESC);
+  sendnow (msg);
 
   /* lastdrop is index of last item we tried to use which could be cursed */
   if (lastdrop != NONE && lastdrop < invcount) {
@@ -948,6 +975,7 @@ killed (monster)
 register char *monster;
 {
   register int m = 0, mh = 0;
+  char msg[256];
 
   /* Find out what we really killed */
   if (!cosmic && !blinded && targetmonster>0 && streq (monster, "it"))
@@ -957,7 +985,8 @@ register char *monster;
     { monster = monhist[mh].m_name; m = monsternum (monster); }
 
   /* Tell the user what we killed */
-  dwait (D_BATTLE | D_MONSTER, "Killed '%s'", monster);
+  sprintf(msg, "Killed '%s'", monster);
+  dwait (D_BATTLE | D_MONSTER, msg);
 
   /* If cheating against Rogue 3.6, check out our arrow */
   if (version < RV52A && cheat) {
@@ -969,9 +998,10 @@ register char *monster;
   }
 
   /* Echo the number arrows we pumped into him */
-  if (mh >=0 && mhit+mmiss > 0 && mtarget == mh)
-    dwait (D_BATTLE | D_MONSTER, "%d out of %d missiles hit the %s",
-           mhit, mhit+mmiss, monster);
+  if (mh >=0 && mhit+mmiss > 0 && mtarget == mh) {
+    sprintf(msg, "%d out of %d missiles hit the %s", mhit, mhit+mmiss, monster);
+    dwait (D_BATTLE | D_MONSTER, msg);
+  }
 
   /* If we killed it by hacking, add the result to long term memory */
   if (hitstokill > 0 && mh != NONE)
@@ -1005,12 +1035,14 @@ washit (monster)
 char *monster;
 {
   register int mh = 0, m = 0;
+  char msg[256];
 
   /* Find out what really hit us */
   if ((mh = getmonhist (monster, 1)) != NONE)
     { monster = monhist[mh].m_name; m = monsternum (monster); }
 
-  dwait (D_MONSTER, "Was hit by a '%s'", monster);
+  sprintf (msg, "Was hit by a '%s'", monster);
+  dwait (D_MONSTER, msg);
 
   timeshit++;			/* Bump global count */
 
@@ -1034,12 +1066,14 @@ wasmissed (monster)
 char *monster;
 {
   register int mh = 0, m = 0;
+  char msg[256];
 
   /* Find out what really missed us */
   if ((mh = getmonhist (monster, 1)) != NONE)
     { monster = monhist[mh].m_name; m = monsternum (monster); }
 
-  dwait (D_MONSTER, "Was missed by a '%s'", monster);
+  sprintf(msg, "Was missed by a '%s'", monster);
+  dwait (D_MONSTER, msg);
 
   timesmissed++;		/* Bump global count */
 
@@ -1092,8 +1126,7 @@ didmiss ()
  * mshit: Record hitting a monster with a missile.
  */
 
-mshit (monster)
-char *monster;
+void mshit (char *monster)
 {
   register int mh;
 
@@ -1116,8 +1149,7 @@ char *monster;
  * msmiss: Record missing a monster with a missile.
  */
 
-msmiss (monster)
-char *monster;
+void msmiss (char *monster)
 {
   register int mh;
 

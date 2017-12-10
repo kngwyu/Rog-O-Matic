@@ -33,6 +33,7 @@
 # include "types.h"
 # include "globals.h"
 # include "install.h"
+#include "prototype.h"
 
 /*
  * handlearmor: This routine is called to determine whether we should
@@ -50,6 +51,7 @@
 handlearmor ()
 {
   int obj;
+  char msg[256];
 
   /* Only check when armor status is different */
   if (!newarmor || cursedarmor) return (0);
@@ -86,7 +88,8 @@ handlearmor ()
     { newarmor = 0; return (0); }
 
   /* Debugging */
-  dwait (D_PACK, "handlearmor: obj %d, currentarmor %d", obj, currentarmor);
+  sprintf(msg, "handlearmor: obj %d, currentarmor %d", obj, currentarmor);
+  dwait (D_PACK, msg);
 
   /* Take off the wrong armor */
   if (currentarmor != NONE && takeoff ())
@@ -346,14 +349,15 @@ readscroll ()
 handlering ()
 {
   int ring1, ring2;
+  char msg[256];
 
   if (!newring && !beingstalked) return (0);
 
   ring1 = havering (1, NOPRINT);
   ring2 = havering (2, NOPRINT);
 
-  dwait (D_PACK, "Handlering: ring1 %d, ring2 %d, left %d, right %d",
-         ring1, ring2, leftring, rightring);
+  sprintf(msg, "Handlering: ring1 %d, ring2 %d, left %d, right %d", ring1, ring2, leftring, rightring);
+  dwait (D_PACK, msg);
 
   if ((leftring == ring1 && rightring == ring2) ||
       (rightring == ring1 && leftring == ring2)) {
@@ -423,9 +427,11 @@ grope (turns)
 register int turns;
 {
   register int k, moves;
+  char msg[256];
 
   if (atrow < 2 || atcol < 1) {
-    command (T_GROPING, "%ds", (turns > 0) ? turns : 1);
+    sprintf(msg, "%ds", (turns > 0) ? turns : 1);
+    command (T_GROPING, msg);
     return (1);
   }
 
@@ -441,10 +447,13 @@ register int turns;
     if ((onrc(CANGO|TRAP, atdrow(blindir), atdcol(blindir)) == CANGO))
       break;
 
-  if (turns) command (T_GROPING, "%c%c%ds", keydir[blindir],
-                        keydir[(blindir+4)&7], turns);
-  else       command (T_GROPING, "%c%c", keydir[blindir],
-                        keydir[(blindir+4)&7]);
+  if (turns) {
+    sprintf(msg, "%c%c%ds", keydir[blindir], keydir[(blindir+4)&7], turns);
+    command (T_GROPING, msg);
+  } else {
+    sprintf(msg, "%c%c", keydir[blindir], keydir[(blindir+4)&7]);
+    command (T_GROPING, msg);
+  }
 
   blindir = (blindir+2) % 8;
   return (1);
@@ -728,6 +737,7 @@ int running;
 restup ()
 {
   register int obj, turns;
+  char msg[256];
 
   /* If we are confused, sit still so we don't bump into anything bad */
   if (confused) { command (T_RESTING, "s"); return (1); }
@@ -779,7 +789,8 @@ restup ()
 
   if ((!darkroom () && ammo) || Hp < Level*2+8 || Level > 15) turns = 1;
 
-  command (T_RESTING, "%ds", turns);
+  sprintf(msg, "%ds", turns);
+  command (T_RESTING, msg);
   return (1);
 }
 
@@ -915,9 +926,11 @@ trywand ()
 eat ()
 {
   int obj;
+  char msg[256];
 
   if ((obj = have (food)) != NONE) {
-    command (T_HANDLING, "e%c", LETTER (obj));
+    sprintf(msg, "e%c", LETTER (obj));
+    command (T_HANDLING, msg);
     return (1);
   }
 

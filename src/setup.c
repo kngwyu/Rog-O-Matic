@@ -33,6 +33,8 @@
 # include <unistd.h>
 # include "install.h"
 
+# include "prototype.h"
+
 # define READ    0
 # define WRITE   1
 
@@ -53,6 +55,8 @@ char *argv[];
   int   emacs = 0, rf = 0, terse = 0, user = 0, quitat = 2147483647;
   char  *rfile = "", *rfilearg = "", options[32];
   char  ropts[128], roguename[128];
+
+  int st;
 
   while (--argc > 0 && (*++argv)[0] == '-') {
     while (*++(*argv)) {
@@ -163,11 +167,22 @@ char *argv[];
 
     if (!author ()) nice (4);
 
-    execl ("player", "player", ft, rp, options, roguename, 0);
-# ifdef PLAYER
-    execl (PLAYER, "player", ft, rp, options, roguename, 0);
-# endif
-    printf ("Rogomatic not available, 'player' binary missing.\n");
+    char *exec_args[6];
+#ifdef PLAYER
+    exec_args[0] = PLAYER;
+#else
+    exec_args[0] = "player";
+#endif
+    exec_args[1] = ft;
+    exec_args[2] = rp;
+    exec_args[3] = options;
+    exec_args[4] = roguename;
+    exec_args[5] = NULL;
+    st = execv(exec_args[0], exec_args);
+    //st = execl (PLAYER, "player", ft, rp, options, roguename, '\0');
+    //st = execl ("/bin/echo", "echo", ft, rp, options, roguename, '\0');
+    printf ("Rogomatic not available, '%s' binary missing. (%d)\n", exec_args[0], st);
+    printf("\tft=%s, rp=%s, options=%s, roguename=%s\n", ft, rp, options, roguename);
     kill (child, SIGKILL);
   }
 }
@@ -182,11 +197,13 @@ char *argv[];
 replaylog (fname, options)
 char *fname, *options;
 {
-  execl ("player", "player", "ZZ", "0", options, fname, 0);
-# ifdef PLAYER
+#ifdef PLAYER
   execl (PLAYER, "player", "ZZ", "0", options, fname, 0);
-# endif
+  printf ("Replay not available, '%s' binary missing.\n", PLAYER);
+#else
+  execl ("player", "player", "ZZ", "0", options, fname, 0);
   printf ("Replay not available, 'player' binary missing.\n");
+#endif
   exit (1);
 }
 

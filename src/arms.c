@@ -32,6 +32,8 @@
 # include "types.h"
 # include "globals.h"
 
+#include "prototype.h"
+
 /*
  * havearmor: Return Kth best armor. K should be in the range 1 to invcount.
  *            If K is greater than the number of pieces of armor we have,
@@ -42,6 +44,7 @@
 # define swap(x,y) {t=(x); (x)=(y); (y)=t;}
 
 int havearmor (k, print, rustproof)
+int k, print, rustproof;
 {
   register int i, j, w, t, n=0;
   int armind[MAXINV], armval[MAXINV];
@@ -79,7 +82,7 @@ int havearmor (k, print, rustproof)
  * of remove curse and -2 for when we don't have a remove curse.
  */
 
-armorclass (i)
+int armorclass (i)
 int i;
 {
   int class;
@@ -119,6 +122,7 @@ int i;
  */
 
 int haveweapon (k, print)
+int k, print;
 {
   register int i, j, w, t, n=0;
   int weapind[MAXINV], weapval[MAXINV];
@@ -169,7 +173,7 @@ int haveweapon (k, print)
  *              high numbers.
  */
 
-weaponclass (i)
+int weaponclass (i)
 int i;
 {
   int class, hitplus = 0, damplus = 0;
@@ -238,6 +242,7 @@ int i;
  */
 
 int havering (k, print)
+int k, print;
 {
   register int i, j, r, t, n=0;
   int ringind[MAXINV], ringval[MAXINV];
@@ -284,7 +289,7 @@ int havering (k, print)
  *            value of the ring.
  */
 
-ringclass (i)
+int ringclass (i)
 int i;
 {
   int class = 0, magicplus = 0;
@@ -536,6 +541,7 @@ int i;
 int havemissile ()
 {
   register int i, fewest = 9999, obj = NONE;
+  char msg[256];
 
   if (wielding (thrower)) {	/* Wielding bow, use arrows */
     for (i=0; i<invcount; ++i)
@@ -557,10 +563,12 @@ int havemissile ()
         { obj = i; fewest = inven[i].count; }
   }
 
-  if (obj != NONE)
-    dwait (D_BATTLE, "Havemissile returns (%s", itemstr (obj));
-  else
+  if (obj != NONE) {
+    sprintf(msg, "Havemissile returns (%s", itemstr (obj));
+    dwait (D_BATTLE, msg);
+  } else {
     dwait (D_BATTLE, "Havemissile fails");
+  }
 
   return (obj);
 }

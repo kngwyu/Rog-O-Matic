@@ -39,6 +39,7 @@
 # include "globals.h"
 # include "termtokens.h"
 # include "getroguetoken.h"
+# include "prototype.h"
 
 # define READ	0
 
@@ -47,6 +48,8 @@
  * curses(3)).  This macro is based on the winch(win) macro.
  */
 # define charonscreen(Y,X)	(A_CHARTEXT & mvwinch (stdscr, Y, X))
+
+void sendcnow (char);
 
 char *month[] = {
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -148,19 +151,19 @@ printscreen (void)
  * implies that we have synchronized with Rogue.
  */
 
-getrogue (waitstr, onat)
-char *waitstr;                          /* String to synchronize with */
-int   onat;                             /* 0 ==> Wait for waitstr
-                                           1 ==> Cursor on @ sufficient
-                                           2 ==> [1] + send ';' when ever
-                                           we eat a --More-- message */
-
+void getrogue (char *waitstr, int onat)
+/* waitstr: String to synchronize with */
+/* onat : 0 ==> Wait for waitstr
+          1 ==> Cursor on @ sufficient
+          2 ==> [1] + send ';' when ever
+          we eat a --More-- message */
 {
   int   botprinted = 0, wasmapped = didreadmap, r, c, pending ();
   register int i, j;
   char  ch, *s, *m, *q, *d, *call;
   int *doors;
   static moved = 0;
+  char msg[256];
 
   newdoors = doorlist;			/* no new doors found yet */
   atrow0 = atrow; atcol0 = atcol;	/* Save our current posistion */
@@ -235,8 +238,13 @@ int   onat;                             /* 0 ==> Wait for waitstr
     if (ch == *call) {
       if (*++call == 0) {
         /* Send an escape (and possibly a semicolon) to clear the message */
-        if (onat == 2) sendnow ("%c;", ESC);
-        else           sendnow ("%c", ESC);
+        if (onat == 2) {
+            sprintf(msg, "%c;", ESC);
+            sendnow (msg);
+        } else {
+            sprintf(msg, "%c", ESC);
+            sendnow (msg);
+        }
       }
     }
     else call = "Call it:";
@@ -399,7 +407,8 @@ int   onat;                             /* 0 ==> Wait for waitstr
       default:
 
         if (ch < ' ') {
-          saynow ("Unknown character '\\%o'--more--", ch);
+          sprintf(msg, "Unknown character '\\%o'--more--", ch);
+          saynow (msg);
           waitforspace ();
         }
         else if (row) {
@@ -446,8 +455,8 @@ int   onat;                             /* 0 ==> Wait for waitstr
 
   /* If mapping status has changed */
   if (wasmapped != didreadmap) {
-    dwait (D_CONTROL | D_SEARCH, "wasmapped: %d   didreadmap: %d",
-           wasmapped, didreadmap);
+    sprintf(msg, "wasmapped: %d   didreadmap: %d", wasmapped, didreadmap);
+    dwait (D_CONTROL | D_SEARCH, msg);
 
     mapinfer ();
   }
@@ -457,7 +466,8 @@ int   onat;                             /* 0 ==> Wait for waitstr
 
     while (doors != newdoors) {
       r = *doors++; c = *doors++;
-      dwait (D_INFORM, "new door at %d, %d", r, c);
+      sprintf(msg, "new door at %d, %d", r, c);
+      dwait (D_INFORM, msg);
       inferhall (r, c);
     }
   }
@@ -623,16 +633,14 @@ dumpwalls ()
  */
 
 /* VARARGS1 */
-sendnow (f, a1, a2, a3, a4)
-char *f;
-int a1, a2, a3, a4;
+void sendnow (char *m)
 {
   char cmd[128];
   register char *s = cmd;
 
   memset(cmd, '\0', 128);
 
-  sprintf (cmd, f, a1, a2, a3, a4);
+  sprintf (cmd, "%s", m);
 
   while (*s) sendcnow (*s++);
 }
@@ -642,8 +650,7 @@ int a1, a2, a3, a4;
  * the logging of characters in echo mode.
  */
 
-sendcnow (c)
-char c;
+void sendcnow (char c)
 {
   if (replaying)
     return;
@@ -674,15 +681,13 @@ char c;
 # define bump(p,sizeq) (p)=((p)+1)%sizeq
 
 /* VARARGS1 */
-rogo_send (f, a1, a2, a3, a4)
-char *f;
-int a1, a2, a3, a4;
+void rogo_send (char *msg)
 {
   char cmd[128];
   register char *s = cmd;
 
   memset (cmd, '\0', 128);
-  sprintf (s, f, a1, a2, a3, a4);
+  sprintf (s, "%s", msg);
 
   debuglog ("rogo_send (%s)\n",s);
 
@@ -877,15 +882,13 @@ char *mess;
  */
 
 /* VARARGS1 */
-say (f, a1, a2, a3, a4, a5, a6, a7, a8)
-char *f;
-int a1, a2, a3, a4, a5, a6, a7, a8;
+void say (char *m)
 {
   char buf[BUFSIZ], *b;
 
   if (!emacs && !terse) {
     memset (buf, '\0', BUFSIZ);
-    sprintf (buf, f, a1, a2, a3, a4, a5, a6, a7, a8);
+    sprintf(buf, "%s", m);
     at (0,0);
 
     for (b=buf; *b; b++) printw ("%s", unctrl (*b));
@@ -901,12 +904,10 @@ int a1, a2, a3, a4, a5, a6, a7, a8;
  */
 
 /* VARARGS1 */
-saynow (f, a1, a2, a3, a4, a5, a6, a7, a8)
-char *f;
-int a1, a2, a3, a4, a5, a6, a7, a8;
+void saynow (char *m)
 {
   if (!emacs && !terse) {
-    say (f, a1, a2, a3, a4, a5, a6, a7, a8);
+    say (m);
     refresh ();
   }
 }
@@ -1032,9 +1033,11 @@ charsavail ()
 {
   long n;
   int retc;
+  char msg[256];
 
   if (retc = ioctl (READ, FIONREAD, &n)) {
-    saynow ("Ioctl returns %d, n=%ld.\n", retc, n);
+    sprintf(msg, "Ioctl returns %d, n=%ld.\n", retc, n);
+    saynow (msg);
     n=0;
   }
 
@@ -1067,8 +1070,10 @@ redrawscreen ()
  * roguelog file.
  */
 
-toggleecho ()
+void toggleecho ()
 {
+  char msg[256];
+
   if (replaying) return;
 
   logging = !logging;
@@ -1076,10 +1081,12 @@ toggleecho ()
   if (logging) {
     if (! rogue_log_open (ROGUELOG)) {
       logging = !logging;
-      saynow ("can't open %s", ROGUELOG);
+      sprintf(msg, "can't open %s", ROGUELOG);
+      saynow (msg);
     }
     else {
-      saynow ("Logging to file %s", ROGUELOG);
+      sprintf(msg, "Logging to file %s", ROGUELOG);
+      saynow (msg);
 
       if (*versionstr) command (T_OTHER, "v");
     }
@@ -1087,7 +1094,10 @@ toggleecho ()
   else {
     rogue_log_close ();
 
-    if (playing) saynow ("File %s closed", ROGUELOG);
+    if (playing) {
+      sprintf(msg, "File %s closed", ROGUELOG);
+      saynow (msg);
+    }
   }
 
   if (playing)
@@ -1158,7 +1168,7 @@ FILE *f;
   for (i = 0; i < 24; i++) {
     for (length = 79; length >= 0 && charonscreen(i,length) == ' '; length--);
 
-    for (j=0; j <= length; j++) fprintf (f, "%c", charonscreen(i,j));
+    for (j=0; j <= length; j++) fprintf (f, "%ld", charonscreen(i,j));
 
     fprintf (f, "\n");
   }
@@ -1182,12 +1192,16 @@ FILE *f;
 
 dosnapshot ()
 {
-  if ((snapshot = wopen (SNAPSHOT, "a")) == NULL)
-    saynow ("Cannot write file %s.", SNAPSHOT);
-  else {
+  char msg[256];
+
+  if ((snapshot = wopen (SNAPSHOT, "a")) == NULL) {
+    sprintf(msg, "Cannot write file %s.", SNAPSHOT);
+    saynow (msg);
+  } else {
     printsnap (snapshot);
     fclose (snapshot);
-    saynow ("Snapshot added to %s.", SNAPSHOT);
+    sprintf(msg, "Snapshot added to %s.", SNAPSHOT);
+    saynow (msg);
   }
 }
 
@@ -1197,7 +1211,7 @@ dosnapshot ()
  * formfeed not recorded in the log file.   MLM
  */
 
-clearscreen ()
+void clearscreen ()
 {
   register int i, j;
 

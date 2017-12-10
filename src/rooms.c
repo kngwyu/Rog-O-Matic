@@ -161,8 +161,7 @@ register int r,c;
  * nametrap: look around for a trap and set its type.
  */
 
-nametrap (traptype, standingonit)
-int traptype, standingonit;
+void nametrap (int traptype, int standingonit)
 {
   register int i, r, c, tdir = NONE, monsteradj = 0;
 
@@ -411,11 +410,12 @@ clearcurrect()
  * Bug if teleported horiz or vert. Infers cango
  */
 
-updateat ()
+void updateat ()
 {
   register int dr = atrow - atrow0, dc = atcol - atcol0;
   register int i, r, c;
   int   dist, newzone, sum;
+  char msg[256];
 
   /*
    * Record passage from one zone to the next
@@ -487,7 +487,8 @@ updateat ()
     else
       return;
 
-    dwait (D_INFORM, "Inferring %s at %d,%d.", terrain, atrow, atcol);
+    sprintf(msg, "Inferring %s at %d,%d.", terrain, atrow, atcol);
+    dwait (D_INFORM, msg);
   }
   else if (on (DOOR | ROOM) && !isexplored (atrow, atcol) && !darkroom ()) {
     markexplored (atrow, atcol);
@@ -709,6 +710,7 @@ register int row, col;
 teleport ()
 {
   register int r = atrow0, c = atcol0;
+  char msg[256];
 
   goalr = goalc = NONE; setnewgoal ();
 
@@ -721,8 +723,10 @@ teleport ()
       if (onrc (WALL | DOOR | HALL, r, c)) break;
 
       if (onrc (TRAP, r, c)) {
-        if (!onrc (ARROW|DARTRAP|GASTRAP|BEARTRP|TRAPDOR|TELTRAP, r, c))
-          saynow ("Assuming teleport trap at %d, %d", r, c);
+        if (!onrc (ARROW|DARTRAP|GASTRAP|BEARTRP|TRAPDOR|TELTRAP, r, c)) {
+          sprintf(msg, "Assuming teleport trap at %d, %d", r, c);
+          saynow (msg);
+        }
 
         break;
       }
@@ -769,12 +773,15 @@ markexplored (row, col)
 int row, col;
 {
   register int rm = whichroom (row, col);
+  char msg[256];
 
   if (rm != NONE && !(levelmap[rm] & EXPLORED)) {
     levelmap[rm] |= EXPLORED;
 
-    if (!(levelmap[rm] & HASROOM))
-      saynow ("Assuming room %d is gone.", zone);
+    if (!(levelmap[rm] & HASROOM)) {
+      sprintf(msg, "Assuming room %d is gone.", zone);
+      saynow (msg);
+    }
   }
 }
 
@@ -853,14 +860,15 @@ printexplored ()
  * space.
  */
 
-inferhall (r, c)
-register int r, c;
+void inferhall (register int r, register int c)
 {
   register int i, j, k;
 
   int inc, rm, end1, end2, end, dropout = 0, dir = NONE;
 
   char dirch = ' ';
+
+  char msg[256];
 
   for (k = 0; k < 8; k += 2) {
     if (onrc (HALL, r + deltr[k], c + deltc[k]))      /* Hall has been seen */
@@ -869,7 +877,8 @@ register int r, c;
       dir = k;
   }
 
-  dwait (D_SEARCH, "Room direction %d", dir);
+  sprintf(msg, "Room direction %d", dir);
+  dwait (D_SEARCH, msg);
 
   if (dir < 0) return;
 
@@ -961,8 +970,10 @@ register int r1, c1, r2, c2;
 {
   register int r, c;
   int endr = max (r1, r2), endc = max (c1, c2);
+  char msg[256];
 
-  dwait (D_INFORM, "Inferring hall (%d,%d) to (%d,%d)", r1, c1, r2, c2);
+  sprintf(msg, "Inferring hall (%d,%d) to (%d,%d)", r1, c1, r2, c2);
+  dwait (D_INFORM, msg);
 
   for (r = min (r1, r2); r <= endr; r++)
     for (c = min (c1, c2); c <= endc; c++)

@@ -32,6 +32,8 @@
 # include "types.h"
 # include "install.h"
 
+#include "prototype.h"
+
 int knob[MAXKNOB];
 char *knob_name[MAXKNOB] = {
   "trap searching:   ",

@@ -106,6 +106,7 @@
 # include "termtokens.h"
 # include "install.h"
 
+#include "prototype.h"
 
 /* FIXME: get rid of this prototype in the correct way */
 FILE *rogo_openlog (char *genelog);
@@ -343,13 +344,21 @@ jmp_buf  commandtop;
  * Main program
  */
 
-main (argc, argv)
+int main (argc, argv)
 int   argc;
 char *argv[];
 {
-  char  ch, *s, *getenv(), *statusline(), msg[128];
+  char  ch, *s, *getenv(), *statusline();
   int startingup = 1;
   register int  i;
+  char msg[256];
+
+#ifdef notdef
+  for (i=0; i<argc; i++) {
+    printf("arg[%d]=%s\n", i, argv[i]);
+  }
+  exit(1);
+#endif
 
   debuglog_open ("debuglog.player");
 
@@ -465,18 +474,13 @@ char *argv[];
    */
 
   if (replaying)
-    sprintf (msg, " Replaying log file %s, version %s.",
-             logfilename, versionstr);
+    sprintf (msg, " Replaying log file %s, version %s.", logfilename, versionstr);
   else
-    sprintf (msg, " %s: version %s, genotype %d, quit at %d.",
-             roguename, versionstr, geneid, quitat);
+    sprintf (msg, " %s: version %s, genotype %d, quit at %d.", roguename, versionstr, geneid, quitat);
 
-  if (emacs)
-    { fprintf (realstdout, "%s  (%%b)", msg); fflush (realstdout); }
-  else if (terse)
-    { fprintf (realstdout, "%s\n", msg); fflush (realstdout); }
-  else
-    { saynow (msg); }
+  if (emacs) { fprintf (realstdout, "%s  (%%b)", msg); fflush (realstdout); }
+  else if (terse) { fprintf (realstdout, "%s\n", msg); fflush (realstdout); }
+  else { saynow (msg); }
 
   /*
    * Now that we have the version figured out, we can properly
@@ -487,10 +491,13 @@ char *argv[];
    * older Rogue 3.6 from Rogue 3.6 with extra magic...
    */
 
-  if (version < RV53A)
-    sendnow ("%c//;", ctrl('l'));
-  else
-    sendnow ("%c;", ctrl('r'));
+  if (version < RV53A) {
+    sprintf(msg, "%c//;", ctrl('l'));
+    sendnow (msg);
+  } else {
+    sprintf(msg, "%c;", ctrl('r'));
+    sendnow (msg);
+  }
 
   /*
    * If we are not replaying an old game, we must position the
@@ -516,7 +523,10 @@ char *argv[];
 
   /* Identify all 26 monsters */
   if (!replaying)
-    for (ch = 'A'; ch <= 'Z'; ch++) rogo_send ("/%c", ch);
+    for (ch = 'A'; ch <= 'Z'; ch++) {
+      sprintf(msg, "/%c", ch);
+      rogo_send (msg);
+    }
 
   /*
    * Signal handling. On an interrupt, Rogomatic goes into transparent
@@ -586,14 +596,23 @@ char *argv[];
         case 'Y': case 'U': case 'B': case 'N':
         case 'h': case 'j': case 'k': case 'l':
         case 'y': case 'u': case 'b': case 'n':
-        case 's': command (T_OTHER, "%c", ch); transparent = 1; break;
+        case 's':
+            sprintf(msg, "%c", ch);
+            command (T_OTHER, msg);
+            transparent = 1;
+            break;
 
         case 'f': ch = getch ();
 
           for (s = "hjklyubnHJKLYUBN"; *s; s++) {
             if (ch == *s) {
-              if (version < RV53A) command (T_OTHER, "f%c", ch);
-              else                 command (T_OTHER, "%c", ctrl (ch));
+              if (version < RV53A) {
+                sprintf(msg, "f%c", ch);
+                command (T_OTHER, msg);
+              } else {
+                sprintf(msg, "%c", ctrl (ch));
+                command (T_OTHER, msg);
+              }
             }
           }
 
@@ -622,7 +641,9 @@ char *argv[];
         case '+': setpsd (DOPRINT); at (row, col); break;
 
         case 'A': attempt = (attempt+1) % 5;
-          saynow ("Attempt %d", attempt); break;
+          sprintf(msg, "Attempt %d", attempt);
+          saynow (msg);
+          break;
 
         case 'G': mvprintw (0, 0,
                               "%d: Sr %d Dr %d Re %d Ar %d Ex %d Rn %d Wk %d Fd %d, %d/%d",
@@ -634,12 +655,14 @@ char *argv[];
           say (chicken ? "chicken" : "aggressive");
           break;
 
-        case '~': if (replaying)
-            saynow ("Replaying log file %s, version %s.",
-                    logfilename, versionstr);
-          else
-            saynow (" %s: version %s, genotype %d, quit at %d.",
-                    roguename, versionstr, geneid, quitat);
+        case '~':
+          if (replaying) {
+              sprintf(msg, "Replaying log file %s, version %s.", logfilename, versionstr);
+              saynow (msg);
+          } else {
+            sprintf(msg, " %s: version %s, genotype %d, quit at %d.", roguename, versionstr, geneid, quitat);
+            saynow (msg);
+          }
 
           break;
 
@@ -703,7 +726,10 @@ char *argv[];
 
         case '{': promptforflags (); break;
 
-        case '&': saynow ("Object count is %d.", objcount); break;
+        case '&':
+            sprintf(msg, "Object count is %d.", objcount);
+            saynow (msg);
+            break;
 
         case '*': blinded = !blinded;
           saynow (blinded ? "blinded" : "sighted");
@@ -822,6 +848,7 @@ void onintr (int sig)
 startlesson ()
 {
   int tmpseed = 0;
+  char msg[256];
 
   sprintf (genelog, "%s/GeneLog%d", getRgmDir (), version);
   sprintf (genepool, "%s/GenePool%d", getRgmDir (), version);
@@ -845,8 +872,10 @@ startlesson ()
 
   /* Serialize access to the gene pool */
   if (lock_file (genelock, MAXLOCK)) {	/* Lock the gene pool */
-    if (rogo_openlog (genelog) == NULL)	/* Open the gene log file */
-      saynow ("Could not open file %s", genelog);
+    if (rogo_openlog (genelog) == NULL)	{ /* Open the gene log file */
+      sprintf(msg, "Could not open file %s", genelog);
+      saynow (msg);
+    }
 
     if (! readgenes (genepool))		/* Read the gene pool */
       initpool (MAXKNOB, 20);		/* Random starting point */

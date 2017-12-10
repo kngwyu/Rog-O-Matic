@@ -29,6 +29,7 @@
 
 # include <stdio.h>
 # include <stdlib.h>
+# include <time.h>
 # include "types.h"
 
 # define TRIALS(g)		((g)->score.count)
@@ -46,7 +47,8 @@ extern int knob[];
 extern double mean(), stdev(), sqrt();
 extern FILE *wopen();
 
-static int inittime=0, trialno=0, lastid=0;
+static time_t inittime=(time_t)0;
+static int trialno=0, lastid=0;
 static int crosses=0, shifts=0, mutations=0;
 static statistic g_score = ZEROSTAT;
 static statistic g_level = ZEROSTAT;
@@ -63,7 +65,7 @@ static int summgene (register FILE *f, register genotype *gene);
 static int parsegene (register char *buf, register genotype *gene);
 static int writegene (register FILE *gfil, register genotype *g);
 static int initgene (register genotype *gene);
-static int birth (register FILE *f, register genotype *gene);
+static void birth (register FILE *f, register genotype *gene);
 static int cross (register int father, register int mother, register int new);
 static int mutate (register int father, register int new);
 static int shift (register int father, register int new);
@@ -83,8 +85,7 @@ initpool (k, m)
 {
   inittime = time (0);
 
-  if (glog) fprintf (glog, "Gene pool initalized, k %d, m %d, %s",
-                       k, m, ctime (&inittime));
+  if (glog) fprintf (glog, "Gene pool initalized, k %d, m %d, %s", k, m, ctime (&inittime));
 
   randompool (m);
 }
@@ -167,8 +168,7 @@ int *newid, *knb, *best, *avg;
  * evalknobs: Add a data point to the gene pool
  */
 
-evalknobs (gid, score, level)
-int gid, score, level;
+void evalknobs (int gid, int score, int level)
 {
   register int g;
 
@@ -372,8 +372,7 @@ register char *genepool;
     quit (1, "Cannot open file '%s'\n", genepool);
 
   /* Write the header line */
-  fprintf (gfil, "%d %d %d %d %d %d",
-           inittime, trialno, lastid, crosses, shifts, mutations);
+  fprintf (gfil, "%d %d %d %d %d %d", (int)inittime, trialno, lastid, crosses, shifts, mutations);
   fprintf (gfil, "|");
   writestat (gfil, &g_score);
   fprintf (gfil, "|");
@@ -472,7 +471,7 @@ register genotype *gene;
  * Birth: Summarize Record the birth of a genotype.
  */
 
-static birth (f, gene)
+static void birth (f, gene)
 register FILE *f;
 register genotype *gene;
 {

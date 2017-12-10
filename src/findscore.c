@@ -28,6 +28,7 @@
  */
 
 # include <stdio.h>
+# include <stdlib.h>
 # include "install.h"
 # define TEMPFL "/tmp/RscoreXXXXXX"
 # define ISDIGIT(c) ((c) >= '0' && (c) <= '9')

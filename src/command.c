@@ -34,6 +34,8 @@
 # include "types.h"
 # include "globals.h"
 
+#include "prototype.h"
+
 # define EQUAL 0
 
 static int cmdonscreen = 0;
@@ -42,29 +44,42 @@ static int cmdonscreen = 0;
 move1 (d)
 int   d;
 {
-  command (T_MOVING, "%c", keydir[d]);
+  char msg[256];
+  sprintf(msg, "%c", keydir[d]);
+  command (T_MOVING, msg);
 }
 
 /* Move in direction 'd' until we find something */
 fmove (d)
 int   d;
 {
-  if (version < RV53A)	command (T_MOVING, "f%c", keydir[d]);
-  else			command (T_MOVING, "%c", ctrl (keydir[d]));
+  char msg[256];
+
+  if (version < RV53A) {
+    sprintf(msg, "f%c", keydir[d]);
+    command (T_MOVING, msg);
+  } else {
+    sprintf(msg, "%c", ctrl (keydir[d]));
+    command (T_MOVING, msg);
+  }
 }
 
 /* Move 'count' squares in direction 'd', with time use mode 'mode' */
 rmove (count, d, mode)
 int   count, d, mode;
 {
-  command (mode, "%d%c", count, keydir[d]);
+  char msg[256];
+  sprintf(msg, "%d%c", count, keydir[d]);
+  command (mode, msg);
 }
 
 /* Move one square in direction 'd' without picking anything up */
 mmove (d, mode)
 int   d, mode;
 {
-  command (mode, "m%c", keydir[d]);
+  char msg[256];
+  sprintf(msg, "m%c", keydir[d]);
+  command (mode, msg);
 }
 
 /*
@@ -74,15 +89,13 @@ int   d, mode;
  */
 
 /* VARARGS2 */
-command (tmode, f, a1, a2, a3, a4)
-char *f;
-int tmode, a1, a2, a3, a4;
+void command (int tmode, char *cmd)
 {
   int times;
-  char cmd[128], functionchar ();
+  char functionchar ();
 
   /* Build the command */
-  sprintf (cmd, f, a1, a2, a3, a4);
+  //sprintf (cmd, f, a1, a2, a3, a4);
 
   debuglog ("command : command (%s)\n",cmd);
 
@@ -389,7 +402,10 @@ usemsg (str, obj)
 char *str;
 int obj;
 {
-  if (! dwait (D_INFORM, "%s (%s", str, itemstr (obj)))
-    saynow ("%s (%s", str, itemstr (obj));
+  char msg[256];
+  sprintf(msg,"%s (%s", str, itemstr (obj));
+  if (! dwait (D_INFORM, msg))
+    sprintf(msg, "%s (%s", str, itemstr (obj));
+    saynow (msg);
 }
 

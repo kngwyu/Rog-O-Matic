@@ -45,13 +45,15 @@ struct levstruct {
 } levpos[MAXNUMLEV];
 int numlev = 0;
 
+void fillstruct (FILE *, struct levstruct *);
+
 /*
  * positionreplay: Called when user has typed the 'R' command, it fills
  * the level table by calling findlevel if necessary, and then positions
  * the log file to the level requested by the user.
  */
 
-positionreplay ()
+void positionreplay ()
 {
   int curlev;
   long curpos;
@@ -160,10 +162,10 @@ int *nmlev, maxnum;
  * fields of a levstruct.
  */
 
-fillstruct (f, lev)
-FILE *f;
-struct levstruct *lev;
+void fillstruct (FILE *f, struct levstruct *lev)
 {
+  char msg[256];
+
   lev->level  = 0;
   lev->gold   = 0;
   lev->hp     = 0;
@@ -198,7 +200,8 @@ struct levstruct *lev;
 
   fscanf (f, "%d/%d", &lev->explev, &lev->exp);
 
-  saynow ("Found level %d, has %d gold...", lev->level, lev->gold);
+  sprintf(msg, "Found level %d, has %d gold...", lev->level, lev->gold);
+  saynow (msg);
 }
 
 /*

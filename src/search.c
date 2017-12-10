@@ -31,6 +31,7 @@
 # include <curses.h>
 # include "types.h"
 # include "globals.h"
+#include "prototype.h"
 
 # define QSIZE (4000)
 
@@ -118,20 +119,21 @@ register int movetype;
 {
   register int dir, dr, dc, r, c;
   int timemode, searchit, count=1;
+  char msg[256];
 
   dir=mvdir[atrow][atcol]-FROM; dr=deltr[dir]; dc=deltc[dir];
 
   if (dir > 7 || dir < 0) {
     if (dir < 0) {
-      dwait (D_ERROR, "Followmap: direction invalid!  < 0  dir %d,  atr %d atc %d",
-                   dir, atrow, atcol);
+      sprintf(msg, "Followmap: direction invalid!  < 0  dir %d,  atr %d atc %d", dir, atrow, atcol);
+      dwait (D_ERROR, msg);
       return (0);			      /* Something Broke */
     }
     else if (dir >= TARGET) {
       dir = dir - TARGET;
       if (dir > 7) {
-        dwait (D_ERROR, "Followmap: adjusted direction still invalid!  dir %d,  atr %d atc %d",
-                   dir, atrow, atcol);
+        sprintf(msg, "Followmap: adjusted direction still invalid!  dir %d,  atr %d atc %d", dir, atrow, atcol);
+        dwait (D_ERROR, msg);
         return (0);			      /* Something Broke still */
       }
     }
@@ -202,8 +204,10 @@ int movetype, (*evalinit)(), (*evaluate)();
 {
   register int thedir, dir, r, c;
   int val, avd, cont;
+  char msg[256];
 
-  dwait (D_CONTROL | D_SEARCH, "Validatemap: type %d", movetype);
+  sprintf(msg, "Validatemap: type %d", movetype);
+  dwait (D_CONTROL | D_SEARCH, msg);
 
   if (mvtype != movetype) {
     dwait (D_SEARCH, "Validatemap: move type mismatch, map invalid.");
@@ -362,6 +366,7 @@ char dir[24][80];
   static int sdirect[8] = {4, 6, 0, 2, 5, 7, 1, 3},
              sdeltr[8]  = {0,-1, 0, 1,-1,-1, 1, 1},
              sdeltc[8]  = {1, 0,-1, 0, 1,-1,-1, 1};
+  char msg[256];
 
   head = tail = begin;
   end = begin + QSIZE;
@@ -450,7 +455,8 @@ char dir[24][80];
 
       if (debug (D_SCREEN | D_SEARCH | D_INFORM)) {
         mvprintw (r, c, "=");
-        dwait (D_SEARCH, "Searchto: target value %d.", moveval[r][c]);
+        sprintf(msg, "Searchto: target value %d.", moveval[r][c]);
+        dwait (D_SEARCH, msg);
       }
 
       searchcontinue = movecont[r][c];

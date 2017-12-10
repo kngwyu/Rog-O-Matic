@@ -53,7 +53,7 @@ int   objval[] = {
   /* none */         0
 };
 
-worth (obj)
+int worth (obj)
 int obj;
 {
   int value, w;

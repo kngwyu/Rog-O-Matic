@@ -34,6 +34,7 @@
 # include "types.h"
 # include "globals.h"
 # include "install.h"
+#include "prototype.h"
 
 /*
  * foughtmonster records whether we engaged in battle recently.  This
@@ -223,9 +224,11 @@ int   strategize ()
 
 int callitpending ()
 {
+  char msg[256];
 
   if (pending_call_letter != ' ') {
-    command (T_OTHER, "c%c%s\n", pending_call_letter, pending_call_name);
+    sprintf(msg, "c%c%s\n", pending_call_letter, pending_call_name);
+    command (T_OTHER, msg);
     pending_call_letter = ' ';
     memset (pending_call_name, '\0', NAMSIZ);
     return (1);
@@ -245,6 +248,7 @@ int   fightmonster ()
   int  melee = 0, adjacent = 0, alertmonster = 0;
   int  wanddir = NONE, m = NONE, howmean;
   char mon, monc = ':', *monster;
+  char msg[256];
 
   /* Check for adjacent monsters */
   for (i = 0; i < mlistlen; i++) {
@@ -296,9 +300,8 @@ int   fightmonster ()
         { wanddir = direc (rr-atrow, cc-atcol); }
 
       /* Debugging breakpoint */
-      dwait (D_BATTLE, "%c <%d,%d>, danger %d, worst %c(%d,%d), total %d",
-             screen[rr][cc], rr-atrow, cc-atcol,
-             danger, monc, mdir, mbad, adjacent);
+      sprintf(msg, "%c <%d,%d>, danger %d, worst %c(%d,%d), total %d", screen[rr][cc], rr-atrow, cc-atcol, danger, monc, mdir, mbad, adjacent);
+      dwait (D_BATTLE, msg);
     }
   }
 
@@ -345,8 +348,8 @@ int   fightmonster ()
   if (danger >= Hp) display ("In trouble...");
 
   /* Well, nothing better than to hit the beast! Tell dwait about it */
-  dwait (D_BATTLE, "Attacking %s(%d) direction %d (total danger %d)...",
-         monster, mbad, mdir, danger);
+  sprintf(msg, "Attacking %s(%d) direction %d (total danger %d)...", monster, mbad, mdir, danger);
+  dwait (D_BATTLE, msg);
 
   /* Record the monster type */
   lastmonster = monc-'A'+1;
@@ -371,6 +374,7 @@ int   tomonster ()
   register int i, dist, rr, cc, mdir = NONE, mbad = NONE;
   int   closest, which, danger = 0, adj = 0, alert = 0;
   char  monc = ':', monchar = ':', *monster;
+  char msg[256];
 
   /* If no monsters, fail */
   if (mlistlen==0)
@@ -408,9 +412,8 @@ int   tomonster ()
 
       /* Or if he is meaner than another equally close monster, save him */
       else if (dist == closest && avghit(i) > avghit(which)) {
-        dwait (D_BATTLE, "Chasing %c(%d) rather than %c(%d) at distance %d.",
-               mlist[i].chr, avghit(i), mlist[which].chr,
-               avghit(which), dist);
+        sprintf(msg, "Chasing %c(%d) rather than %c(%d) at distance %d.", mlist[i].chr, avghit(i), mlist[which].chr, avghit(which), dist);
+        dwait (D_BATTLE, msg);
 
         closest = dist; which = i; monc = mlist[i].chr; mbad = avghit(i);
       }
@@ -498,10 +501,13 @@ char c;
 
 aftermelee ()
 {
+  char msg[256];
+
   if (foughtmonster > 0) {
     lyinginwait = 1;
     command (T_RESTING, "s");
-    dwait (D_BATTLE, "Aftermelee: waiting for %d rounds.", foughtmonster);
+    sprintf(msg, "Aftermelee: waiting for %d rounds.", foughtmonster);
+    dwait (D_BATTLE, msg);
     return (1);
   }
 
@@ -537,6 +543,7 @@ int adj;		/* How many attackers are there? */
 {
   int obj, turns;
   static int stepback = 0;
+  char msg[256];
 
   /* Ascertain whether we have a clear path to this monster */
   if (mdir != NONE && !checkcango (mdir, mdist))
@@ -564,9 +571,8 @@ int adj;		/* How many attackers are there? */
   if (beingstalked > INVPRES) { turns = 0; danger += INVDAM; }
 
   /* Debugging breakpoint */
-  dwait (D_BATTLE,
-         "Battlestations: %s(%d), total danger %d, dir %d, %d turns, %d adj.",
-         monster, mbad, danger, mdir, turns, adj);
+  sprintf(msg, "Battlestations: %s(%d), total danger %d, dir %d, %d turns, %d adj.", monster, mbad, danger, mdir, turns, adj);
+  dwait (D_BATTLE, msg);
 
   /*
    * Switch back to our mace or sword?
@@ -1078,6 +1084,7 @@ int tostuff ()
 fightinvisible ()
 {
   char cmd[20]; register int dir, liberties = 0, lastdir, obj;
+  char msg[256];
 
   /* Count down the time since we were last hit by a stalker */
   if (--beingstalked < 0)
@@ -1135,7 +1142,8 @@ fightinvisible ()
 
   /* If can only go two ways, then go back and forth (will hit) */
   if (liberties == 1 || liberties == 2) {
-    command (T_FIGHTING, "%c%c", keydir[lastdir], keydir[(lastdir+4)&7]);
+    sprintf(msg, "%c%c", keydir[lastdir], keydir[(lastdir+4)&7]);
+    command (T_FIGHTING, msg);
     return (1);
   }
 
@@ -1150,8 +1158,10 @@ fightinvisible ()
       break;
 
   if (dir > 7)	command (T_FIGHTING, "hjlk");
-  else		command (T_FIGHTING, "%c%c%c", keydir[dir],
-                     keydir[dir], keydir[(dir+4)&7]);
+  else {
+    sprintf(msg, "%c%c%c", keydir[dir], keydir[dir], keydir[(dir+4)&7]);
+    command (T_FIGHTING, msg);
+  }
 
   return (1);
 }
@@ -1170,6 +1180,7 @@ archery ()
 {
   register int m, mtk;
   char *monster;
+  char msg[256];
 
   for (m=0; m < mlistlen; m++) {	/* Find a sleeping monster */
     monster = monname (mlist[m].chr);
@@ -1198,8 +1209,8 @@ archery ()
         larder > 0 ||
         ((streq (monster, "leprechaun") && !hungry ()) ||
          streq (monster, "nymph"))) {
-      dwait (D_BATTLE, "Arching at %c at (%d,%d)",
-             mlist[m].chr, mlist[m].mrow, mlist[m].mcol);
+      sprintf(msg, "Arching at %c at (%d,%d)", mlist[m].chr, mlist[m].mrow, mlist[m].mcol);
+      dwait (D_BATTLE, msg);
 
       if (archmonster (m, mtk)) return (1);
 

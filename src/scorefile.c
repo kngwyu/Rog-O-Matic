@@ -39,6 +39,8 @@
 # include "globals.h"
 # include "install.h"
 
+#include "prototype.h"
+
 # define LINESIZE	2048
 # define SCORE(s,p)     (atoi (s+p))
 
@@ -51,9 +53,7 @@ static char lokfil[100];
  * score file and catching interrupts and things.
  */
 
-add_score (new_line, vers, ntrm)
-char *new_line, *vers;
-int ntrm;
+void add_score (char *new_line, char *vers, int ntrm)
 {
   int   wantscore = 1;
   char  ch;
