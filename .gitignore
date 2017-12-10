@@ -1,0 +1,17 @@
+Makefile
+config.h
+config.log
+config.status
+src/.deps/
+src/Makefile
+src/prototype.h
+stamp-h1
+*.o
+aclocal.m4
+autom4te.cache/
+src/datesub
+src/gene
+src/histplot
+src/player
+src/rgmplot
+src/rogomatic
