@@ -27,41 +27,28 @@
 
 FILE *debug = NULL;
 
-static void
-err_doit(int errnoflag, int error, const char *fmt, va_list ap)
-{
-  char buf[MAXLINE];
+static void err_doit(const char *fmt, va_list ap) {
+    char buf[MAXLINE];
 
-  vsnprintf(buf, MAXLINE, fmt, ap);
+    vsnprintf(buf, MAXLINE, fmt, ap);
 
-  if (debug != NULL) {
-    fputs(buf, debug);
-    fflush (debug);
-  }
-  else {
-    fputs (buf, stderr);
-    fflush (stderr);
-  }
+    if (debug != NULL) {
+        fputs(buf, debug);
+        fflush(debug);
+    } else {
+        fputs(buf, stderr);
+        fflush(stderr);
+    }
 }
 
-void debuglog_open (const char *log)
-{
-  debug = fopen (log, "w");
+void debuglog_open(const char *log) { debug = fopen(log, "w"); }
+
+void debuglog_close(void) { fclose(debug); }
+
+void debuglog(const char *fmt, ...) {
+    va_list ap;
+
+    va_start(ap, fmt);
+    err_doit(fmt, ap);
+    va_end(ap);
 }
-
-void debuglog_close (void)
-{
-  fclose (debug);
-}
-
-void debuglog (const char *fmt, ...)
-{
-  va_list  ap;
-  char buf[MAXLINE];
-
-  va_start (ap, fmt);
-  err_doit (0, 0, fmt, ap);
-  va_end (ap);
-}
-
-

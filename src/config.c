@@ -35,32 +35,26 @@
 static const char *rgmpath  = "rlog";
 static const char *lockpath = "rlog/RgmLock";
 
-const char *
-getRgmDir ()
-{
-  DIR *rgmdir = NULL;
+const char *getRgmDir(void) {
+    DIR *rgmdir = NULL;
 
-  /* give preference to a directory in the current directory */
-  if ((rgmdir = opendir (rgmpath)) != NULL) {
-    closedir (rgmdir);
-    return rgmpath;
-  }
-  else {
-    return RGMDIR;
-  }
+    /* give preference to a directory in the current directory */
+    if ((rgmdir = opendir(rgmpath)) != NULL) {
+        closedir(rgmdir);
+        return rgmpath;
+    } else {
+        return RGMDIR;
+    }
 }
 
-const char *
-getLockFile ()
-{
-  DIR *rgmdir = NULL;
+const char *getLockFile(void) {
+    DIR *rgmdir = NULL;
 
-  /* give preference to a directory in the current directory */
-  if ((rgmdir = opendir (rgmpath)) != NULL) {
-    closedir (rgmdir);
-    return lockpath;
-  }
-  else {
-    return LOCKFILE;
-  }
+    /* give preference to a directory in the current directory */
+    if ((rgmdir = opendir(rgmpath)) != NULL) {
+        closedir(rgmdir);
+        return lockpath;
+    } else {
+        return LOCKFILE;
+    }
 }
