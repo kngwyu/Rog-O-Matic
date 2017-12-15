@@ -1,0 +1,6 @@
+* About 
+This repository is a maintainanced fork of Rog-O-Matic.
+I get the original source from http://www.anthive.com/project/rogue/ and applied a patch from http://www.nakajim.net/rogue/
+I confirmed I can compile this source with GCC 7.2.1 and latest Arch Linux, and now I'm working on refactoring the codes.
+
+
