@@ -4,7 +4,6 @@ config.log
 config.status
 src/.deps/
 src/Makefile
-src/prototype.h
 stamp-h1
 *.o
 aclocal.m4
