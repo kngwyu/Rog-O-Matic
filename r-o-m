@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ ! -z $1 ]; then # コマンド引数はrogomaticを繰り返す回数
+  numtry=$1
+  #echo $numtry
+  expr "$numtry" + 1 >/dev/null 2>&1
+  if [ $? -ge 2 ]; then
+    numtry=1
+  fi
+else
+  numtry=1
+fi
+
+for ((i=1;i<=$numtry;i++))
+do
+  echo -n "Rogue Challenge: $i/$numtry"
+  for ((j=0;j<3;j++)); do sleep 1; echo -n "."; done ; echo # 起動前には3秒待つ
+  #rogomatic -e  # rogomaticでログを吐かせる
+  rogomatic      # rogomaticでログは吐かない
+  test $i -ne $numtry && sleep 10 # 待ち時間を変更するならココ
+  reset
+  rogue -s
+done
